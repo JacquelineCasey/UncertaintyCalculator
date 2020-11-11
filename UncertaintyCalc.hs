@@ -8,8 +8,9 @@ module UncertaintyCalc where
 data Measurement = PoM Rational Rational
 
 instance Show Measurement where
-    show (PoM a b) = "(" ++ show (fromRational a) ++ " +- "
-                         ++ show (fromRational b) ++ ")"
+    show m = let (PoM a b) = roundMeasurement m in 
+        "(" ++ show (fromRational a) ++ " +- "
+            ++ show (fromRational b) ++ ")"
 
 instance Num Measurement where
     (PoM v1 u1) + (PoM v2 u2) =  (PoM (v1 + v2) (rootSquares [u1, u2]))
