@@ -36,6 +36,7 @@ getTPrime (PoM v1 u1) (PoM v2 u2) = abs . fromRational $
 
 roundUncertainty :: Rational -> Rational
 roundUncertainty d
+    | d == 0          = 0
     | d < 1           = 0.1 * roundUncertainty (d * 10.0)
     | d > 10          = 10 * roundUncertainty (d * 0.1)
     | d >= 1 && d < 3 = (0.1 *) $ fromIntegral $ round (10.0 * d)
@@ -43,14 +44,16 @@ roundUncertainty d
 
 roundValue :: Rational -> Rational -> Rational
 roundValue val roundedErr
+    | roundedErr == 0  = val
     | roundedErr >= 10 && roundedErr < 30 || roundedErr < 10 && roundedErr >= 3
                        = fromIntegral $ round val
-    | roundedErr >= 30 = 10  * (roundValue (0.1 * val) (0.1 * roundedErr))
-    | otherwise        = 0.1 * (roundValue (10 * val)   (10 * roundedErr))
+    | roundedErr >= 30 = 10  * roundValue (0.1 * val) (0.1 * roundedErr)
+    | otherwise        = 0.1 * roundValue (10 * val)   (10 * roundedErr)
 
 roundMeasurement :: Measurement -> Measurement
 roundMeasurement (PoM val err)
-    = PoM (roundValue val (roundUncertainty err)) (roundUncertainty err)
+    | val >= 0  = PoM (roundValue val (roundUncertainty err)) (roundUncertainty err)
+    | val < 0  = PoM (-1) 0.0 * roundMeasurement (PoM (-1 * val) err)
 
 rootSquares :: [Rational] -> Rational
 rootSquares = toRational . (** 0.5) . fromRational . (foldr ((+) . (^2)) 0.0)
